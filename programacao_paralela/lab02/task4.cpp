@@ -4,7 +4,6 @@
 #include <random>
 #include <chrono>
 #include <execution>
-#include <thread>
 
 using namespace std;
 
@@ -14,19 +13,19 @@ vector<double> generate_random_array(int size) {
     random_device rd;
     mt19937 gen(rd());
     uniform_real_distribution<> dis(0.0, 1000000.0);
-    
+
     for (int i = 0; i < size; ++i) {
         array[i] = dis(gen);
     }
-    
+
     return array;
 }
 
-// Функция для замера времени выполнения сортировки
+// Функция для измерения времени выполнения сортировки
 template<typename SortFunc>
 double measure_sort_time(SortFunc sort_func, vector<double>& arr) {
     auto start = chrono::high_resolution_clock::now();
-    sort_func(arr.begin(), arr.end());
+    sort_func(arr);  // Теперь функция принимает вектор вместо итераторов
     auto end = chrono::high_resolution_clock::now();
     chrono::duration<double> duration = end - start;
     return duration.count();
@@ -48,29 +47,35 @@ int main() {
     vector<pair<string, double>> results;
 
     for (int size : sizes) {
-        cout << "Testing for array size " << size << ":\n";
+        cout << "Тестирование для массива размером " << size << ":\n";
         vector<double> arr = generate_random_array(size);
 
-        // Тестирование с различными политиками выполнения
-        vector<double> arr_copy = arr; // Создаем копию массива для каждого теста
+        // Тестирование сортировки с различными политиками выполнения
+        vector<double> arr_copy = arr;
 
         // Сортировка с использованием параллельных потоков (std::execution::par)
-        double time = measure_sort_time([](auto& arr) { sort(execution::par, arr.begin(), arr.end()); }, arr_copy);
+        double time = measure_sort_time([](vector<double>& vec) { 
+            sort(execution::par, vec.begin(), vec.end()); 
+        }, arr_copy);
         results.push_back({"std::execution::par", time});
 
         // Сортировка с использованием векторного параллельного исполнения (std::execution::par_unseq)
         arr_copy = arr;
-        time = measure_sort_time([](auto& arr) { sort(execution::par_unseq, arr.begin(), arr.end()); }, arr_copy);
+        time = measure_sort_time([](vector<double>& vec) { 
+            sort(execution::par_unseq, vec.begin(), vec.end()); 
+        }, arr_copy);
         results.push_back({"std::execution::par_unseq", time});
 
         // Сортировка без параллельных потоков (стандартный std::sort)
         arr_copy = arr;
-        time = measure_sort_time([](auto& arr) { sort(arr.begin(), arr.end()); }, arr_copy);
+        time = measure_sort_time([](vector<double>& vec) { 
+            sort(vec.begin(), vec.end()); 
+        }, arr_copy);
         results.push_back({"std::sort", time});
 
-        // Выводим результаты для текущего размера массива
+        // Вывод результатов
         print_results(results);
-        results.clear(); // Очищаем результаты для следующего размера массива
+        results.clear();
     }
 
     return 0;

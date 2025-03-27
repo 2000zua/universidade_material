@@ -19,7 +19,7 @@ double measure_execution_time(ExecutionPolicy policy, const std::vector<int>& da
 }
 
 int main() {
-    std::vector<size_t> sizes = {500000000, 1000000000, 2000000000};
+    std::vector<size_t> sizes = {5000000, 10000000, 20000000};
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<int> dist(1, 100); // Генерация случайных чисел (1-100)
